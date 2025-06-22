@@ -562,6 +562,7 @@
         const TMDB_API_KEY = '4e44d9029b1270a757cddc766a1bcb63'; // Free demo key
         const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
         const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+        const TMDB_MAX_PAGE = 20; // Number of pages to sample when fetching movies
 
         // TMDb Genre IDs mapping
         const GENRE_IDS = {
@@ -805,16 +806,22 @@
                     }
                 }
 
-                // Fetch multiple pages to get more movies
+                // Fetch multiple random pages to get more movies
                 let allMovies = [];
-                for (let page = 1; page <= 3; page++) {
+                const usedPages = new Set();
+                for (let i = 0; i < 3; i++) {
+                    const page = Math.floor(Math.random() * TMDB_MAX_PAGE) + 1;
+                    if (usedPages.has(page)) {
+                        i--; // ensure we try a unique page
+                        continue;
+                    }
+                    usedPages.add(page);
                     try {
                         const movies = await fetchMoviesByGenre(genreId, page);
                         allMovies = [...allMovies, ...movies];
                         if (allMovies.length >= 40) break; // Stop if we have enough
                     } catch (error) {
                         console.log(`Error fetching page ${page}:`, error);
-                        break;
                     }
                 }
 
@@ -889,14 +896,20 @@
                 // If not enough movies in cache, fetch more
                 if (availableMovies.length < 1) {
                     let allMovies = [];
-                    for (let page = 1; page <= 3; page++) {
+                    const usedPages = new Set();
+                    for (let i = 0; i < 3; i++) {
+                        const page = Math.floor(Math.random() * TMDB_MAX_PAGE) + 1;
+                        if (usedPages.has(page)) {
+                            i--;
+                            continue;
+                        }
+                        usedPages.add(page);
                         try {
                             const movies = await fetchMoviesByGenre(genreId, page);
                             allMovies = [...allMovies, ...movies];
                             if (allMovies.length >= 40) break;
                         } catch (error) {
                             console.log(`Error fetching page ${page}:`, error);
-                            break;
                         }
                     }
                     
