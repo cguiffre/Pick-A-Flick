@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Battle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .genre-display {
+            font-size: 2rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 50px 0;
+            opacity: 0.8;
+        }
+
+        .error {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #ff6b6b;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        .battle-section {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            align-items: stretch;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .movie-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            width: 350px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-color: #ffd700;
+        }
+
+        .movie-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .movie-card:hover::before {
+            left: 100%;
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .movie-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ffd700;
+            line-height: 1.3;
+        }
+
+        .movie-info {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .movie-rating {
+            font-size: 1rem;
+            color: #ffd700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .movie-description {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            opacity: 0.9;
+            flex-grow: 1;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+        }
+
+        .vs-text {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .btn-small {
+            background: linear-gradient(45deg, #666, #888);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            margin-top: 10px;
+        }
+
+        .btn-small:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #777, #999);
+        }
+
+        .unseen-btn {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+        }
+
+        select option {
+            background: #333;
+            color: white;
+            padding: 10px;
+        }
+
+        select:hover {
+            border-color: #ffd700;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .rankings-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 40px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .rankings-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ffd700;
+        }
+
+        .genre-rankings {
+            margin-bottom: 30px;
+        }
+
+        .genre-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #ff8e8e;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .ranking-list {
+            list-style: none;
+        }
+
+        .ranking-item {
+            background: rgba(255, 255, 255, 0.05);
+            margin: 8px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .ranking-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .rank-number {
+            background: #ffd700;
+            color: #333;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .movie-info-rank {
+            flex: 1;
+        }
+
+        .win-count {
+            background: rgba(255, 107, 107, 0.8);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .no-rankings {
+            text-align: center;
+            opacity: 0.6;
+            font-size: 1.2rem;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        .stats-summary {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: rgba(255, 107, 107, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .battle-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .battle-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-color: #ffd700;
+        }
+
+        .battle-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .battle-stats {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .battle-section {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .vs-text {
+                order: 1;
+                margin: 20px 0;
+            }
+            
+            .movie-card {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .genre-display {
+                font-size: 1.5rem;
+            }
+
+            .btn {
+                display: block;
+                margin: 10px auto;
+                width: 200px;
+            }
+
+            .stats-summary {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🎬 Movie Battle</h1>
+            <div class="battle-name-display" id="battleNameDisplay">Select or Create a Battle</div>
+            <div class="genre-display" id="genreDisplay">Loading movies...</div>
+        </div>
+
+        <div id="loadingMessage" class="loading">
+            <div class="loading-spinner"></div>
+            Fetching movies from TMDb...
+        </div>
+
+        <div id="errorMessage" class="error hidden"></div>
+
+        <div class="battle-section hidden" id="battleSection">
+            <div class="movie-card" id="movie1" onclick="selectMovie(1)">
+                <img class="movie-poster" id="poster1" alt="Movie poster">
+                <div class="movie-title" id="title1"></div>
+                <div class="movie-info" id="info1"></div>
+                <div class="movie-rating" id="rating1"></div>
+                <div class="movie-description" id="desc1"></div>
+                <div style="margin-top: 15px;">
+                    <button class="btn-small unseen-btn" onclick="markAsUnseen(1, event)" title="I haven't seen this movie">
+                        👁️‍🗨️ Haven't Seen
+                    </button>
+                </div>
+            </div>
+            
+            <div class="vs-text">VS</div>
+            
+            <div class="movie-card" id="movie2" onclick="selectMovie(2)">
+                <img class="movie-poster" id="poster2" alt="Movie poster">
+                <div class="movie-title" id="title2"></div>
+                <div class="movie-info" id="info2"></div>
+                <div class="movie-rating" id="rating2"></div>
+                <div class="movie-description" id="desc2"></div>
+                <div style="margin-top: 15px;">
+                    <button class="btn-small unseen-btn" onclick="markAsUnseen(2, event)" title="I haven't seen this movie">
+                        👁️‍🗨️ Haven't Seen
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls hidden" id="controls">
+            <div style="margin-bottom: 20px;">
+                <label for="genreSelect" style="display: block; margin-bottom: 10px; font-size: 1.1rem; color: #ffd700;">Choose Genre:</label>
+                <select id="genreSelect" onchange="onGenreChange()" style="
+                    background: rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(10px);
+                    border: 2px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 25px;
+                    padding: 12px 20px;
+                    font-size: 1rem;
+                    color: white;
+                    min-width: 200px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">
+                    <option value="">🎲 Random Genre</option>
+                    <option value="Action">🎬 Action</option>
+                    <option value="Adventure">🗺️ Adventure</option>
+                    <option value="Animation">🎨 Animation</option>
+                    <option value="Comedy">😂 Comedy</option>
+                    <option value="Crime">🕵️ Crime</option>
+                    <option value="Documentary">📽️ Documentary</option>
+                    <option value="Drama">🎭 Drama</option>
+                    <option value="Family">👨‍👩‍👧‍👦 Family</option>
+                    <option value="Fantasy">🧙‍♂️ Fantasy</option>
+                    <option value="History">📚 History</option>
+                    <option value="Horror">👻 Horror</option>
+                    <option value="Music">🎵 Music</option>
+                    <option value="Mystery">🔍 Mystery</option>
+                    <option value="Romance">💕 Romance</option>
+                    <option value="Science Fiction">🚀 Science Fiction</option>
+                    <option value="TV Movie">📺 TV Movie</option>
+                    <option value="Thriller">😱 Thriller</option>
+                    <option value="War">⚔️ War</option>
+                    <option value="Western">🤠 Western</option>
+                </select>
+            </div>
+            <button class="btn" id="newBattleBtn" onclick="showBattleSelection()">🎲 Select/Create Battle</button>
+            <button class="btn" id="continueBtn" onclick="newBattle()" style="display: none;">▶️ Continue Battle</button>
+            <button class="btn" id="tieBtn" onclick="selectTie()">🤝 It's a Tie!</button>
+            <button class="btn" id="skipBtn" onclick="skipBattle()">⏭️ Skip This Battle</button>
+            <button class="btn" id="rankingsBtn" onclick="toggleRankings()">📊 View Rankings</button>
+        </div>
+
+        <div class="battle-selection-section hidden" id="battleSelectionSection">
+            <h2 class="rankings-title">🎮 Select or Create a Movie Battle</h2>
+            
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #ffd700; margin-bottom: 15px;">Create New Battle:</h3>
+                <input type="text" id="newBattleName" placeholder="Enter battle name (e.g., 'My Favorite Sci-Fi')" style="
+                    background: rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(10px);
+                    border: 2px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 15px;
+                    padding: 15px 20px;
+                    font-size: 1rem;
+                    color: white;
+                    width: 100%;
+                    max-width: 400px;
+                    margin-bottom: 15px;
+                ">
+                <button class="btn" onclick="createNewBattle()">🎬 Create Battle</button>
+            </div>
+
+            <div id="existingBattlesContainer">
+                <h3 style="color: #ffd700; margin-bottom: 15px;">Existing Battles:</h3>
+                <div id="battlesList"></div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button class="btn" onclick="hideBattleSelection()" style="background: linear-gradient(45deg, #666, #888);">
+                    ← Back to Current Battle
+                </button>
+            </div>
+        </div>
+
+        <div class="rankings-section hidden" id="rankingsSection">
+            <h2 class="rankings-title">🏆 Movie Rankings by Genre</h2>
+            <div class="stats-summary" id="statsContainer"></div>
+            <div id="rankingsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // TMDb API configuration
+        const TMDB_API_KEY = '4e44d9029b1270a757cddc766a1bcb63'; // Free demo key
+        const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+        const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+
+        // TMDb Genre IDs mapping
+        const GENRE_IDS = {
+            "Action": 28,
+            "Adventure": 12,
+            "Animation": 16,
+            "Comedy": 35,
+            "Crime": 80,
+            "Documentary": 99,
+            "Drama": 18,
+            "Family": 10751,
+            "Fantasy": 14,
+            "History": 36,
+            "Horror": 27,
+            "Music": 10402,
+            "Mystery": 9648,
+            "Romance": 10749,
+            "Science Fiction": 878,
+            "TV Movie": 10770,
+            "Thriller": 53,
+            "War": 10752,
+            "Western": 37
+        };
+
+        // Game state
+        let currentGenre = '';
+        let currentGenreId = null;
+        let currentMovies = [];
+        let rankings = {};
+        let showingRankings = false;
+        let isLoading = false;
+        let totalBattles = 0;
+        let movieCache = {}; // Cache movies by genre to avoid repeated API calls
+        let unseenMovies = {}; // Track movies user hasn't seen with timestamp
+        let skippedCount = 0;
+        let tieCount = 0;
+        let selectedGenre = ''; // User's selected genre preference
+
+        // Battle management
+        let currentBattleName = '';
+        let savedBattles = {}; // All saved battles data
+        let showingBattleSelection = false;
+
+        // Storage keys
+        const STORAGE_KEYS = {
+            savedBattles: 'movieBattle_savedBattles',
+            currentBattleName: 'movieBattle_currentBattleName'
+        };
+
+        // Fetch popular movies by genre from TMDb
+        async function fetchMoviesByGenre(genreId, page = 1) {
+            try {
+                console.log(`Fetching movies for genre ID: ${genreId}, page: ${page}`);
+                
+                const url = `${TMDB_BASE_URL}/discover/movie?` +
+                    `api_key=${TMDB_API_KEY}&` +
+                    `with_genres=${genreId}&` +
+                    `sort_by=popularity.desc&` +
+                    `vote_count.gte=100&` + // Basic minimum - movies with at least 100 votes
+                    `page=${page}&` +
+                    `language=en-US`;
+                
+                console.log('Fetching from URL:', url);
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`TMDb API error: ${response.status} - ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const movies = data.results || [];
+                
+                console.log(`Found ${movies.length} movies from API`);
+                
+                return movies;
+            } catch (error) {
+                console.error('Error fetching movies:', error);
+                throw error;
+            }
+        }
+
+        // Initialize rankings for all genres
+        function initializeRankings() {
+            Object.keys(GENRE_IDS).forEach(genre => {
+                rankings[genre] = {};
+            });
+        }
+
+        // Load data from storage
+        function loadStoredData() {
+            try {
+                // Load all saved battles
+                const storedBattles = localStorage.getItem(STORAGE_KEYS.savedBattles);
+                if (storedBattles) {
+                    savedBattles = JSON.parse(storedBattles);
+                }
+
+                // Load current battle name
+                const storedCurrentBattle = localStorage.getItem(STORAGE_KEYS.currentBattleName);
+                if (storedCurrentBattle && savedBattles[storedCurrentBattle]) {
+                    currentBattleName = storedCurrentBattle;
+                    loadBattleData(currentBattleName);
+                }
+
+                // Update the dropdown to reflect saved preference
+                const genreSelect = document.getElementById('genreSelect');
+                if (genreSelect && selectedGenre) {
+                    genreSelect.value = selectedGenre;
+                }
+            } catch (error) {
+                console.error('Error loading stored data:', error);
+            }
+        }
+
+        // Save all data to storage
+        function saveDataToStorage() {
+            try {
+                // Save current battle data
+                if (currentBattleName) {
+                    savedBattles[currentBattleName] = {
+                        rankings: rankings,
+                        unseenMovies: unseenMovies,
+                        totalBattles: totalBattles,
+                        skippedCount: skippedCount,
+                        tieCount: tieCount,
+                        selectedGenre: selectedGenre,
+                        lastPlayed: Date.now()
+                    };
+                }
+
+                localStorage.setItem(STORAGE_KEYS.savedBattles, JSON.stringify(savedBattles));
+                localStorage.setItem(STORAGE_KEYS.currentBattleName, currentBattleName);
+            } catch (error) {
+                console.error('Error saving data:', error);
+            }
+        }
+
+        // Load specific battle data
+        function loadBattleData(battleName) {
+            if (savedBattles[battleName]) {
+                const battleData = savedBattles[battleName];
+                rankings = battleData.rankings || {};
+                unseenMovies = battleData.unseenMovies || {};
+                totalBattles = battleData.totalBattles || 0;
+                skippedCount = battleData.skippedCount || 0;
+                tieCount = battleData.tieCount || 0;
+                selectedGenre = battleData.selectedGenre || '';
+                
+                // Update UI
+                updateBattleNameDisplay();
+                const genreSelect = document.getElementById('genreSelect');
+                if (genreSelect) {
+                    genreSelect.value = selectedGenre;
+                }
+                onGenreChange();
+            }
+        }
+
+        // Update battle name display
+        function updateBattleNameDisplay() {
+            const battleNameDisplay = document.getElementById('battleNameDisplay');
+            if (currentBattleName) {
+                battleNameDisplay.textContent = `Battle: ${currentBattleName}`;
+                battleNameDisplay.style.color = '#ff8e8e';
+            } else {
+                battleNameDisplay.textContent = 'Select or Create a Battle';
+                battleNameDisplay.style.color = '#ffd700';
+            }
+        }
+
+        // Clean up expired unseen movies
+        function cleanupExpiredUnseenMovies() {
+            const fiveDaysAgo = Date.now() - (5 * 24 * 60 * 60 * 1000);
+            Object.keys(unseenMovies).forEach(movieId => {
+                if (unseenMovies[movieId] < fiveDaysAgo) {
+                    delete unseenMovies[movieId];
+                }
+            });
+        }
+
+        // Check if movie is recently unseen
+        function isMovieRecentlyUnseen(movieId) {
+            if (!unseenMovies[movieId]) return false;
+            const fiveDaysAgo = Date.now() - (5 * 24 * 60 * 60 * 1000);
+            return unseenMovies[movieId] > fiveDaysAgo;
+        }
+
+        // Mark movie as unseen
+        function markMovieAsUnseen(movieId) {
+            unseenMovies[movieId] = Date.now();
+            saveDataToStorage();
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            document.getElementById('loadingMessage').classList.add('hidden');
+        }
+
+        // Hide error message
+        function hideError() {
+            document.getElementById('errorMessage').classList.add('hidden');
+        }
+
+        // Get random genre (or use selected genre)
+        function getRandomGenre() {
+            // If user has selected a specific genre, ALWAYS use that
+            if (selectedGenre && GENRE_IDS[selectedGenre]) {
+                console.log(`Using selected genre: ${selectedGenre}`);
+                return {
+                    name: selectedGenre,
+                    id: GENRE_IDS[selectedGenre]
+                };
+            }
+            
+            // Otherwise, pick a random genre
+            const genreNames = Object.keys(GENRE_IDS);
+            const randomGenre = genreNames[Math.floor(Math.random() * genreNames.length)];
+            console.log(`Using random genre: ${randomGenre}`);
+            return {
+                name: randomGenre,
+                id: GENRE_IDS[randomGenre]
+            };
+        }
+
+        // Get two random movies from a genre
+        async function getTwoRandomMovies(genreName, genreId) {
+            try {
+                // Check cache first
+                if (movieCache[genreName] && movieCache[genreName].length >= 2) {
+                    const availableMovies = movieCache[genreName].filter(movie => 
+                        !isMovieRecentlyUnseen(movie.id)
+                    );
+                    
+                    if (availableMovies.length >= 2) {
+                        const shuffled = availableMovies.sort(() => 0.5 - Math.random());
+                        return shuffled.slice(0, 2);
+                    }
+                }
+
+                // Fetch multiple pages to get more movies
+                let allMovies = [];
+                for (let page = 1; page <= 3; page++) {
+                    try {
+                        const movies = await fetchMoviesByGenre(genreId, page);
+                        allMovies = [...allMovies, ...movies];
+                        if (allMovies.length >= 40) break; // Stop if we have enough
+                    } catch (error) {
+                        console.log(`Error fetching page ${page}:`, error);
+                        break;
+                    }
+                }
+
+                console.log(`Total movies fetched: ${allMovies.length}`);
+
+                // Filter for quality - just basic requirements
+                const validMovies = allMovies.filter(movie => 
+                    movie.poster_path && 
+                    movie.overview && 
+                    movie.overview.length > 20 && // Has a decent description
+                    movie.vote_average > 0 && // Has some rating
+                    movie.release_date &&
+                    !isMovieRecentlyUnseen(movie.id)
+                );
+
+                console.log(`After basic filtering: ${validMovies.length} valid movies`);
+
+                if (validMovies.length < 2) {
+                    // Final fallback - remove unseen filter
+                    const fallbackMovies = allMovies.filter(movie => 
+                        movie.poster_path && 
+                        movie.overview && 
+                        movie.overview.length > 10 &&
+                        movie.release_date
+                    );
+                    
+                    console.log(`Fallback movies: ${fallbackMovies.length}`);
+                    
+                    if (fallbackMovies.length < 2) {
+                        throw new Error(`Not enough movies found for genre: ${genreName}. Found ${fallbackMovies.length} movies. This genre might have limited content on TMDb.`);
+                    }
+                    
+                    // Cache and return fallback movies
+                    const uniqueMovies = fallbackMovies.filter((movie, index, self) => 
+                        index === self.findIndex(m => m.id === movie.id)
+                    );
+                    movieCache[genreName] = uniqueMovies;
+                    const shuffled = uniqueMovies.sort(() => 0.5 - Math.random());
+                    return shuffled.slice(0, 2);
+                }
+
+                // Remove duplicates and cache
+                const uniqueMovies = validMovies.filter((movie, index, self) => 
+                    index === self.findIndex(m => m.id === movie.id)
+                );
+                
+                movieCache[genreName] = uniqueMovies;
+
+                // Return two random movies
+                const shuffled = uniqueMovies.sort(() => 0.5 - Math.random());
+                return shuffled.slice(0, 2);
+
+            } catch (error) {
+                console.error('Error getting random movies:', error);
+                throw error;
+            }
+        }
+
+        // Get a single random movie from a genre (for replacement)
+        async function getSingleRandomMovie(genreName, genreId, excludeIds = []) {
+            try {
+                // Get movies from cache or fetch new ones
+                let availableMovies = [];
+                
+                if (movieCache[genreName] && movieCache[genreName].length > 0) {
+                    availableMovies = movieCache[genreName].filter(movie => 
+                        !isMovieRecentlyUnseen(movie.id) && 
+                        !excludeIds.includes(movie.id)
+                    );
+                }
+                
+                // If not enough movies in cache, fetch more
+                if (availableMovies.length < 1) {
+                    let allMovies = [];
+                    for (let page = 1; page <= 3; page++) {
+                        try {
+                            const movies = await fetchMoviesByGenre(genreId, page);
+                            allMovies = [...allMovies, ...movies];
+                            if (allMovies.length >= 40) break;
+                        } catch (error) {
+                            console.log(`Error fetching page ${page}:`, error);
+                            break;
+                        }
+                    }
+                    
+                    const validMovies = allMovies.filter(movie => 
+                        movie.poster_path && 
+                        movie.overview && 
+                        movie.overview.length > 10 &&
+                        movie.release_date &&
+                        !excludeIds.includes(movie.id)
+                    );
+                    
+                    if (validMovies.length > 0) {
+                        movieCache[genreName] = [...(movieCache[genreName] || []), ...validMovies];
+                        availableMovies = validMovies.filter(movie => !isMovieRecentlyUnseen(movie.id));
+                    }
+                }
+                
+                if (availableMovies.length === 0) {
+                    throw new Error(`No replacement movie found for genre: ${genreName} - please try a new battle instead`);
+                }
+                
+                // Return a random movie
+                const randomIndex = Math.floor(Math.random() * availableMovies.length);
+                return availableMovies[randomIndex];
+                
+            } catch (error) {
+                console.error('Error getting replacement movie:', error);
+                throw error;
+            }
+        }
+
+        // Format movie data for display
+        function formatMovieData(tmdbMovie) {
+            const releaseYear = tmdbMovie.release_date ? new Date(tmdbMovie.release_date).getFullYear() : 'Unknown';
+            const rating = tmdbMovie.vote_average ? tmdbMovie.vote_average.toFixed(1) : 'N/A';
+            const posterUrl = tmdbMovie.poster_path ? 
+                `${TMDB_IMAGE_BASE_URL}${tmdbMovie.poster_path}` : 
+                getPlaceholderPoster();
+
+            return {
+                title: tmdbMovie.title,
+                year: releaseYear,
+                rating: rating,
+                overview: tmdbMovie.overview || 'No description available.',
+                posterUrl: posterUrl,
+                popularity: tmdbMovie.popularity || 0
+            };
+        }
+
+        // Get placeholder poster
+        function getPlaceholderPoster() {
+            return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNDQ0Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2FhYSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1vdmllIFBvc3RlcjwvdGV4dD48L3N2Zz4=';
+        }
+
+        // Display current battle
+        function displayBattle() {
+            document.getElementById('genreDisplay').textContent = `Genre: ${currentGenre}`;
+            
+            // Show battle section
+            document.getElementById('battleSection').classList.remove('hidden');
+            document.getElementById('controls').classList.remove('hidden');
+            document.getElementById('loadingMessage').classList.add('hidden');
+
+            // Format and display both movies
+            const movie1Data = formatMovieData(currentMovies[0]);
+            const movie2Data = formatMovieData(currentMovies[1]);
+
+            // Reset both cards to original state
+            resetMovieCard(1);
+            resetMovieCard(2);
+
+            // Update movie 1
+            document.getElementById('title1').textContent = movie1Data.title;
+            document.getElementById('poster1').src = movie1Data.posterUrl;
+            document.getElementById('info1').textContent = `${movie1Data.year} • TMDb Rating`;
+            document.getElementById('rating1').innerHTML = `⭐ ${movie1Data.rating}/10`;
+            document.getElementById('desc1').textContent = movie1Data.overview;
+
+            // Update movie 2
+            document.getElementById('title2').textContent = movie2Data.title;
+            document.getElementById('poster2').src = movie2Data.posterUrl;
+            document.getElementById('info2').textContent = `${movie2Data.year} • TMDb Rating`;
+            document.getElementById('rating2').innerHTML = `⭐ ${movie2Data.rating}/10`;
+            document.getElementById('desc2').textContent = movie2Data.overview;
+        }
+
+        // Reset movie card to original state
+        function resetMovieCard(movieNumber) {
+            const card = document.getElementById(`movie${movieNumber}`);
+            const unseenBtn = card.querySelector('.unseen-btn');
+            
+            // Reset card opacity and styling
+            card.style.opacity = '1';
+            card.style.transform = '';
+            card.style.borderColor = '';
+            card.style.boxShadow = '';
+            
+            // Reset unseen button
+            if (unseenBtn) {
+                unseenBtn.textContent = '👁️‍🗨️ Haven\'t Seen';
+                unseenBtn.style.background = '';
+                unseenBtn.disabled = false;
+            }
+        }
+
+        // Start new battle
+        async function newBattle() {
+            // Check if user has selected a battle
+            if (!currentBattleName) {
+                showBattleSelection();
+                return;
+            }
+            
+            if (isLoading) return;
+            
+            isLoading = true;
+            const continueBtn = document.getElementById('continueBtn');
+            const newBattleBtn = document.getElementById('newBattleBtn');
+            
+            if (continueBtn) {
+                continueBtn.disabled = true;
+                continueBtn.innerHTML = '<div class="loading-spinner"></div>Loading...';
+            }
+            
+            // Hide current battle and show loading
+            document.getElementById('battleSection').classList.add('hidden');
+            document.getElementById('loadingMessage').classList.remove('hidden');
+            hideError();
+            
+            // Hide other sections if showing
+            if (showingRankings) {
+                toggleRankings();
+            }
+            if (showingBattleSelection) {
+                hideBattleSelection();
+            }
+
+            try {
+                // Get genre based on user selection
+                const genre = getRandomGenre();
+                currentGenre = genre.name;
+                currentGenreId = genre.id;
+                
+                console.log(`Starting new battle for genre: ${currentGenre} (ID: ${currentGenreId})`);
+                console.log(`Selected genre setting: "${selectedGenre}"`);
+                
+                // Get two random movies from the genre
+                currentMovies = await getTwoRandomMovies(currentGenre, currentGenreId);
+                
+                // Display the battle
+                displayBattle();
+
+            } catch (error) {
+                console.error('Error starting new battle:', error);
+                showError(`Failed to load movie battle: ${error.message}. Please try again.`);
+            } finally {
+                isLoading = false;
+                if (continueBtn) {
+                    continueBtn.disabled = false;
+                    continueBtn.innerHTML = selectedGenre ? `▶️ Continue ${selectedGenre} Battle` : '▶️ Continue Battle';
+                }
+            }
+        }
+
+        // Handle genre change
+        function onGenreChange() {
+            const genreSelect = document.getElementById('genreSelect');
+            selectedGenre = genreSelect.value;
+            console.log(`Genre changed to: "${selectedGenre}"`);
+            saveDataToStorage();
+            
+            // Update button text based on selection
+            const newBattleBtn = document.getElementById('newBattleBtn');
+            if (selectedGenre) {
+                newBattleBtn.textContent = `🎬 New ${selectedGenre} Battle`;
+            } else {
+                newBattleBtn.textContent = '🎲 New Random Battle';
+            }
+            
+            // Immediately start a new battle with the selected genre
+            if (!showingRankings && !showingBattleSelection && currentBattleName) {
+                console.log(`Starting new battle immediately with genre: ${selectedGenre || 'random'}`);
+                newBattle();
+            }
+        }
+
+        // Handle movie selection
+        function selectMovie(movieNumber) {
+            if (isLoading) return;
+            
+            const selectedMovie = currentMovies[movieNumber - 1];
+            const movieTitle = selectedMovie.title;
+            
+            // Initialize genre rankings if needed
+            if (!rankings[currentGenre]) {
+                rankings[currentGenre] = {};
+            }
+            
+            // Update rankings
+            if (!rankings[currentGenre][movieTitle]) {
+                rankings[currentGenre][movieTitle] = 0;
+            }
+            rankings[currentGenre][movieTitle]++;
+            totalBattles++;
+            
+            // Save data
+            saveDataToStorage();
+            
+            // Add selection animation
+            const selectedCard = document.getElementById(`movie${movieNumber}`);
+            selectedCard.style.transform = 'scale(1.05)';
+            selectedCard.style.borderColor = '#ffd700';
+            selectedCard.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.5)';
+            
+            // Update rankings display if currently showing
+            if (showingRankings) {
+                displayRankings();
+            }
+            
+            // Reset animation and start new battle after delay
+            setTimeout(() => {
+                selectedCard.style.transform = '';
+                selectedCard.style.borderColor = '';
+                selectedCard.style.boxShadow = '';
+                newBattle();
+            }, 1000);
+        }
+
+        // Mark movie as unseen and replace it
+        async function markAsUnseen(movieNumber, event) {
+            event.stopPropagation(); // Prevent card selection
+            
+            if (isLoading) return;
+            isLoading = true;
+            
+            const movie = currentMovies[movieNumber - 1];
+            markMovieAsUnseen(movie.id);
+            
+            // Visual feedback - only affect the clicked movie
+            const card = document.getElementById(`movie${movieNumber}`);
+            const btn = event.target;
+            
+            btn.textContent = '✓ Marked as Unseen';
+            btn.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
+            btn.disabled = true;
+            card.style.opacity = '0.6';
+            
+            try {
+                // Get the other movie's ID to exclude it from replacement options
+                const otherMovieIndex = movieNumber === 1 ? 1 : 0;
+                const otherMovieId = currentMovies[otherMovieIndex].id;
+                
+                console.log(`Replacing ${movie.title} with another ${currentGenre} movie...`);
+                
+                // Get a replacement movie from the SAME GENRE
+                const replacementMovie = await getSingleRandomMovie(
+                    currentGenre, 
+                    currentGenreId, 
+                    [movie.id, otherMovieId]
+                );
+                
+                console.log(`Found replacement: ${replacementMovie.title} (${currentGenre})`);
+                
+                // Replace the movie in the current movies array
+                currentMovies[movieNumber - 1] = replacementMovie;
+                
+                // Update the display for just this movie
+                updateSingleMovieDisplay(movieNumber, replacementMovie);
+                
+            } catch (error) {
+                console.error('Error replacing movie:', error);
+                
+                // Show user-friendly error message
+                const card = document.getElementById(`movie${movieNumber}`);
+                const btn = event.target;
+                btn.textContent = '⚠️ No More Movies';
+                btn.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
+                
+                // Suggest starting a new battle instead
+                setTimeout(() => {
+                    if (confirm('No more movies available in this genre with your current preferences. Start a new battle with a different genre?')) {
+                        newBattle();
+                    } else {
+                        // Reset the button if user doesn't want new battle
+                        btn.textContent = '👁️‍🗨️ Haven\'t Seen';
+                        btn.style.background = '';
+                        btn.disabled = false;
+                        card.style.opacity = '1';
+                    }
+                }, 1000);
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // Update display for a single movie
+        function updateSingleMovieDisplay(movieNumber, movie) {
+            const movieData = formatMovieData(movie);
+            
+            // Reset the card first
+            resetMovieCard(movieNumber);
+            
+            // Update the movie data
+            document.getElementById(`title${movieNumber}`).textContent = movieData.title;
+            document.getElementById(`poster${movieNumber}`).src = movieData.posterUrl;
+            document.getElementById(`info${movieNumber}`).textContent = `${movieData.year} • TMDb Rating`;
+            document.getElementById(`rating${movieNumber}`).innerHTML = `⭐ ${movieData.rating}/10`;
+            document.getElementById(`desc${movieNumber}`).textContent = movieData.overview;
+            
+            // Add a subtle animation to show the change
+            const card = document.getElementById(`movie${movieNumber}`);
+            card.style.transform = 'scale(0.95)';
+            card.style.transition = 'all 0.3s ease';
+            
+            setTimeout(() => {
+                card.style.transform = 'scale(1)';
+                setTimeout(() => {
+                    card.style.transition = '';
+                }, 300);
+            }, 100);
+        }
+
+        // Handle tie selection
+        function selectTie() {
+            if (isLoading) return;
+            
+            const movie1 = currentMovies[0];
+            const movie2 = currentMovies[1];
+            const movie1Title = movie1.title;
+            const movie2Title = movie2.title;
+            
+            // Initialize genre rankings if needed
+            if (!rankings[currentGenre]) {
+                rankings[currentGenre] = {};
+            }
+            
+            // Update rankings for both movies
+            if (!rankings[currentGenre][movie1Title]) {
+                rankings[currentGenre][movie1Title] = 0;
+            }
+            if (!rankings[currentGenre][movie2Title]) {
+                rankings[currentGenre][movie2Title] = 0;
+            }
+            
+            // Give both movies equal points
+            rankings[currentGenre][movie1Title]++;
+            rankings[currentGenre][movie2Title]++;
+            
+            totalBattles++;
+            tieCount++;
+            
+            // Save data
+            saveDataToStorage();
+            
+            // Add tie animation to both cards
+            const card1 = document.getElementById('movie1');
+            const card2 = document.getElementById('movie2');
+            const tieBtn = document.getElementById('tieBtn');
+            
+            // Visual feedback
+            card1.style.borderColor = '#ffd700';
+            card2.style.borderColor = '#ffd700';
+            card1.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.5)';
+            card2.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.5)';
+            
+            tieBtn.textContent = '🤝 Tied!';
+            tieBtn.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
+            
+            // Update rankings display if currently showing
+            if (showingRankings) {
+                displayRankings();
+            }
+            
+            // Reset animation and start new battle after delay
+            setTimeout(() => {
+                card1.style.borderColor = '';
+                card2.style.borderColor = '';
+                card1.style.boxShadow = '';
+                card2.style.boxShadow = '';
+                tieBtn.textContent = '🤝 It\'s a Tie!';
+                tieBtn.style.background = '';
+                newBattle();
+            }, 1500);
+        }
+
+        // Skip battle
+        function skipBattle() {
+            if (isLoading) return;
+            
+            skippedCount++;
+            saveDataToStorage();
+            
+            // Visual feedback
+            const skipBtn = document.getElementById('skipBtn');
+            const originalText = skipBtn.textContent;
+            skipBtn.textContent = '⏭️ Skipped!';
+            skipBtn.disabled = true;
+            
+            setTimeout(() => {
+                skipBtn.textContent = originalText;
+                skipBtn.disabled = false;
+                newBattle();
+            }, 1000);
+        }
+
+        // Create new battle
+        function createNewBattle() {
+            const nameInput = document.getElementById('newBattleName');
+            const battleName = nameInput.value.trim();
+            
+            if (!battleName) {
+                alert('Please enter a battle name');
+                return;
+            }
+            
+            if (savedBattles[battleName]) {
+                if (!confirm(`A battle named "${battleName}" already exists. Do you want to overwrite it?`)) {
+                    return;
+                }
+            }
+            
+            // Create new battle
+            currentBattleName = battleName;
+            rankings = {};
+            unseenMovies = {};
+            totalBattles = 0;
+            skippedCount = 0;
+            tieCount = 0;
+            selectedGenre = '';
+            
+            // Initialize rankings
+            initializeRankings();
+            
+            // Save and start
+            saveDataToStorage();
+            updateBattleNameDisplay();
+            
+            // Clear input and hide selection
+            nameInput.value = '';
+            hideBattleSelection();
+            
+            // Start the battle
+            newBattle();
+        }
+
+        // Select existing battle
+        function selectBattle(battleName) {
+            currentBattleName = battleName;
+            loadBattleData(battleName);
+            saveDataToStorage();
+            hideBattleSelection();
+        }
+
+        // Display list of existing battles
+        function displayBattlesList() {
+            const battlesList = document.getElementById('battlesList');
+            const battleNames = Object.keys(savedBattles);
+            
+            if (battleNames.length === 0) {
+                battlesList.innerHTML = '<div style="text-align: center; opacity: 0.6; padding: 20px;">No saved battles yet. Create your first one above!</div>';
+                return;
+            }
+            
+            battlesList.innerHTML = '';
+            
+            // Sort battles by last played (most recent first)
+            battleNames.sort((a, b) => {
+                const timeA = savedBattles[a].lastPlayed || 0;
+                const timeB = savedBattles[b].lastPlayed || 0;
+                return timeB - timeA;
+            });
+            
+            battleNames.forEach(battleName => {
+                const battleData = savedBattles[battleName];
+                const battleItem = document.createElement('div');
+                battleItem.className = 'battle-item';
+                battleItem.onclick = () => selectBattle(battleName);
+                
+                const lastPlayed = battleData.lastPlayed ? 
+                    new Date(battleData.lastPlayed).toLocaleDateString() : 'Never';
+                
+                battleItem.innerHTML = `
+                    <div class="battle-info">
+                        <div class="battle-name">${battleName}</div>
+                        <div class="battle-stats">
+                            ${battleData.totalBattles || 0} battles • 
+                            ${Object.values(battleData.rankings || {}).reduce((total, genre) => 
+                                total + Object.keys(genre).length, 0)} movies ranked • 
+                            Last played: ${lastPlayed}
+                        </div>
+                    </div>
+                    <div style="color: #ffd700; font-size: 1.5rem;">▶️</div>
+                `;
+                
+                battlesList.appendChild(battleItem);
+            });
+        }
+
+        // Show battle selection interface
+        function showBattleSelection() {
+            showingBattleSelection = true;
+            
+            // Hide other sections
+            document.getElementById('battleSection').classList.add('hidden');
+            document.getElementById('controls').classList.add('hidden');
+            document.getElementById('rankingsSection').classList.add('hidden');
+            document.getElementById('loadingMessage').classList.add('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+            
+            // Show battle selection
+            document.getElementById('battleSelectionSection').classList.remove('hidden');
+            document.getElementById('genreDisplay').textContent = 'Select or Create a Battle';
+            
+            // Update battles list
+            displayBattlesList();
+        }
+
+        // Hide battle selection interface
+        function hideBattleSelection() {
+            showingBattleSelection = false;
+            document.getElementById('battleSelectionSection').classList.add('hidden');
+            
+            if (currentBattleName) {
+                // Show battle controls
+                document.getElementById('controls').classList.remove('hidden');
+                document.getElementById('battleSection').classList.remove('hidden');
+                
+                // Update button visibility
+                document.getElementById('newBattleBtn').style.display = 'inline-block';
+                document.getElementById('continueBtn').style.display = 'inline-block';
+            } else {
+                // No battle selected, show selection again
+                showBattleSelection();
+            }
+        }
+
+        // Calculate statistics
+        function calculateStats() {
+            const totalMoviesRanked = Object.values(rankings).reduce((total, genreRankings) => {
+                return total + Object.keys(genreRankings).filter(movie => genreRankings[movie] > 0).length;
+            }, 0);
+
+            const genresWithBattles = Object.keys(rankings).filter(genre => 
+                Object.keys(rankings[genre]).some(movie => rankings[genre][movie] > 0)
+            ).length;
+
+            return {
+                totalBattles,
+                totalMoviesRanked,
+                genresWithBattles
+            };
+        }
+
+        // Display statistics
+        function displayStats() {
+            const stats = calculateStats();
+            const statsContainer = document.getElementById('statsContainer');
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalBattles}</div>
+                    <div class="stat-label">Total Battles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalMoviesRanked}</div>
+                    <div class="stat-label">Movies Ranked</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${tieCount}</div>
+                    <div class="stat-label">Tie Battles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${skippedCount}</div>
+                    <div class="stat-label">Battles Skipped</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${Object.keys(unseenMovies).length}</div>
+                    <div class="stat-label">Movies Not Seen</div>
+                </div>
+            `;
+        }
+
+        // Display rankings
+        function displayRankings() {
+            const container = document.getElementById('rankingsContainer');
+            container.innerHTML = '';
+            
+            // Display stats
+            displayStats();
+            
+            const genresWithData = Object.keys(rankings).filter(genre => 
+                Object.keys(rankings[genre]).length > 0 && 
+                Object.values(rankings[genre]).some(wins => wins > 0)
+            );
+
+            if (genresWithData.length === 0) {
+                container.innerHTML = '<div class="no-rankings">🎭 No battles completed yet!<br><br>Start battling movies to see your personalized rankings powered by TMDb data!</div>';
+                return;
+            }
+            
+            genresWithData.forEach(genre => {
+                const genreDiv = document.createElement('div');
+                genreDiv.className = 'genre-rankings';
+                
+                const genreTitle = document.createElement('h3');
+                genreTitle.className = 'genre-title';
+                genreTitle.textContent = `${genre} Movies`;
+                genreDiv.appendChild(genreTitle);
+                
+                const rankingList = document.createElement('ul');
+                rankingList.className = 'ranking-list';
+                
+                // Sort movies by wins (descending)
+                const sortedMovies = Object.entries(rankings[genre])
+                    .sort(([,a], [,b]) => b - a)
+                    .filter(([, wins]) => wins > 0);
+                
+                if (sortedMovies.length === 0) {
+                    const noMoviesItem = document.createElement('li');
+                    noMoviesItem.className = 'ranking-item';
+                    noMoviesItem.innerHTML = '<div style="opacity: 0.6; font-style: italic;">No movies ranked in this genre yet</div>';
+                    rankingList.appendChild(noMoviesItem);
+                } else {
+                    sortedMovies.forEach(([movieTitle, wins], index) => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'ranking-item';
+                        
+                        listItem.innerHTML = `
+                            <div style="display: flex; align-items: center;">
+                                <div class="rank-number">${index + 1}</div>
+                                <div class="movie-info-rank">
+                                    <div style="font-weight: bold; font-size: 1.1rem;">${movieTitle}</div>
+                                </div>
+                            </div>
+                            <div class="win-count">${wins} ${wins === 1 ? 'win' : 'wins'}</div>
+                        `;
+                        
+                        rankingList.appendChild(listItem);
+                    });
+                }
+                
+                genreDiv.appendChild(rankingList);
+                container.appendChild(genreDiv);
+            });
+        }
+
+        // Toggle rankings display
+        function toggleRankings() {
+            const rankingsSection = document.getElementById('rankingsSection');
+            const battleSection = document.getElementById('battleSection');
+            const rankingsBtn = document.getElementById('rankingsBtn');
+            const genreDisplay = document.getElementById('genreDisplay');
+            
+            showingRankings = !showingRankings;
+            
+            if (showingRankings) {
+                // Show rankings, hide battle
+                displayRankings();
+                rankingsSection.classList.remove('hidden');
+                battleSection.classList.add('hidden');
+                rankingsBtn.textContent = '🎬 Back to Battle';
+                genreDisplay.textContent = 'Your Movie Rankings';
+            } else {
+                // Hide rankings, show battle
+                rankingsSection.classList.add('hidden');
+                battleSection.classList.remove('hidden');
+                rankingsBtn.textContent = '📊 View Rankings';
+                genreDisplay.textContent = `Genre: ${currentGenre}`;
+            }
+        }
+
+        // Initialize the app
+        function init() {
+            loadStoredData();
+            initializeRankings();
+            updateBattleNameDisplay();
+            
+            // If no current battle, show battle selection
+            if (!currentBattleName) {
+                showBattleSelection();
+            } else {
+                // Set initial button text based on selected genre
+                const continueBtn = document.getElementById('continueBtn');
+                if (selectedGenre) {
+                    continueBtn.textContent = `▶️ Continue ${selectedGenre} Battle`;
+                }
+                
+                newBattle();
+            }
+        }
+
+        // Start the app when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
