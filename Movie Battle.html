@@ -600,6 +600,7 @@
         let skippedCount = 0;
         let tieCount = 0;
         let selectedGenre = ''; // User's selected genre preference
+        let ratingProgress = {}; // Track rating threshold and usage per genre
 
         // Battle management
         let currentBattleName = '';
@@ -650,6 +651,60 @@
             Object.keys(GENRE_IDS).forEach(genre => {
                 rankings[genre] = {};
             });
+        }
+
+        // Initialize rating progress for all genres
+        function initializeRatingProgress() {
+            Object.keys(GENRE_IDS).forEach(genre => {
+                ratingProgress[genre] = {
+                    threshold: 9,
+                    shown: new Set(),
+                    total: 0
+                };
+            });
+        }
+
+        // Filter movies by current rating threshold and adjust if needed
+        function applyRatingFilter(genreName, movies) {
+            if (!ratingProgress[genreName]) {
+                ratingProgress[genreName] = { threshold: 9, shown: new Set(), total: 0 };
+            }
+
+            const progress = ratingProgress[genreName];
+            let threshold = progress.threshold;
+            let filtered = movies.filter(m => m.vote_average >= threshold);
+
+            // If insufficient movies, lower the threshold until we have some
+            while (filtered.length < 2 && threshold > 1) {
+                threshold--;
+                progress.threshold = threshold;
+                progress.shown.clear();
+                progress.total = 0;
+                filtered = movies.filter(m => m.vote_average >= threshold);
+            }
+
+            if (filtered.length > progress.total) {
+                progress.total = filtered.length;
+            }
+
+            return filtered;
+        }
+
+        // Record a movie that has been shown and update threshold when needed
+        function recordShownMovie(movie, genreName) {
+            const progress = ratingProgress[genreName];
+            if (!progress) return;
+
+            if (movie.vote_average >= progress.threshold && !progress.shown.has(movie.id)) {
+                progress.shown.add(movie.id);
+                if (progress.total > 0 && progress.shown.size >= Math.ceil(progress.total * 0.5)) {
+                    if (progress.threshold > 1) {
+                        progress.threshold--;
+                        progress.shown.clear();
+                        progress.total = 0;
+                    }
+                }
+            }
         }
 
         // Load data from storage
@@ -711,6 +766,8 @@
                 skippedCount = battleData.skippedCount || 0;
                 tieCount = battleData.tieCount || 0;
                 selectedGenre = battleData.selectedGenre || '';
+
+                initializeRatingProgress();
                 
                 // Update UI
                 updateBattleNameDisplay();
@@ -796,10 +853,12 @@
             try {
                 // Check cache first
                 if (movieCache[genreName] && movieCache[genreName].length >= 2) {
-                    const availableMovies = movieCache[genreName].filter(movie => 
+                    let availableMovies = movieCache[genreName].filter(movie =>
                         !isMovieRecentlyUnseen(movie.id)
                     );
-                    
+
+                    availableMovies = applyRatingFilter(genreName, availableMovies);
+
                     if (availableMovies.length >= 2) {
                         const shuffled = availableMovies.sort(() => 0.5 - Math.random());
                         return shuffled.slice(0, 2);
@@ -870,8 +929,12 @@
                 
                 movieCache[genreName] = uniqueMovies;
 
-                // Return two random movies
-                const shuffled = uniqueMovies.sort(() => 0.5 - Math.random());
+                // Apply rating filter before returning
+                let filtered = applyRatingFilter(genreName, uniqueMovies.filter(movie =>
+                    !isMovieRecentlyUnseen(movie.id)
+                ));
+
+                const shuffled = filtered.sort(() => 0.5 - Math.random());
                 return shuffled.slice(0, 2);
 
             } catch (error) {
@@ -887,10 +950,12 @@
                 let availableMovies = [];
                 
                 if (movieCache[genreName] && movieCache[genreName].length > 0) {
-                    availableMovies = movieCache[genreName].filter(movie => 
-                        !isMovieRecentlyUnseen(movie.id) && 
+                    availableMovies = movieCache[genreName].filter(movie =>
+                        !isMovieRecentlyUnseen(movie.id) &&
                         !excludeIds.includes(movie.id)
                     );
+
+                    availableMovies = applyRatingFilter(genreName, availableMovies);
                 }
                 
                 // If not enough movies in cache, fetch more
@@ -924,14 +989,17 @@
                     if (validMovies.length > 0) {
                         movieCache[genreName] = [...(movieCache[genreName] || []), ...validMovies];
                         availableMovies = validMovies.filter(movie => !isMovieRecentlyUnseen(movie.id));
+                        availableMovies = applyRatingFilter(genreName, availableMovies);
                     }
                 }
                 
                 if (availableMovies.length === 0) {
                     throw new Error(`No replacement movie found for genre: ${genreName} - please try a new battle instead`);
                 }
-                
-                // Return a random movie
+
+                // Apply rating filter to final list in case threshold changed
+                availableMovies = applyRatingFilter(genreName, availableMovies);
+
                 const randomIndex = Math.floor(Math.random() * availableMovies.length);
                 return availableMovies[randomIndex];
                 
@@ -994,6 +1062,10 @@
             document.getElementById('info2').textContent = `${movie2Data.year} • TMDb Rating`;
             document.getElementById('rating2').innerHTML = `⭐ ${movie2Data.rating}/10`;
             document.getElementById('desc2').textContent = movie2Data.overview;
+
+            // Track movies shown for rating threshold adjustments
+            recordShownMovie(currentMovies[0], currentGenre);
+            recordShownMovie(currentMovies[1], currentGenre);
         }
 
         // Reset movie card to original state
@@ -1218,6 +1290,9 @@
             document.getElementById(`info${movieNumber}`).textContent = `${movieData.year} • TMDb Rating`;
             document.getElementById(`rating${movieNumber}`).innerHTML = `⭐ ${movieData.rating}/10`;
             document.getElementById(`desc${movieNumber}`).textContent = movieData.overview;
+
+            // Track shown movie for rating threshold logic
+            recordShownMovie(movie, currentGenre);
             
             // Add a subtle animation to show the change
             const card = document.getElementById(`movie${movieNumber}`);
@@ -1340,8 +1415,9 @@
             tieCount = 0;
             selectedGenre = '';
             
-            // Initialize rankings
+            // Initialize rankings and rating progress
             initializeRankings();
+            initializeRatingProgress();
             
             // Save and start
             saveDataToStorage();
@@ -1585,6 +1661,7 @@
         function init() {
             loadStoredData();
             initializeRankings();
+            initializeRatingProgress();
             updateBattleNameDisplay();
             
             // If no current battle, show battle selection
